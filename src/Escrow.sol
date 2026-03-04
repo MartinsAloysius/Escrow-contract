@@ -111,6 +111,8 @@ contract Escrow {
     function raiseDispute() external onlyBuyer {
        if (currentState != State.AWAITING_DELIVERY) revert InvalidState();
 
+       isDisputed = true;
+
         disputeDeadline = block.timestamp + 7 days; // Arbitrator has 7 days to resolve the dispute
         currentState = State.DISPUTE;
 
