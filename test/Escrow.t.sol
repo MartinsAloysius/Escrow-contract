@@ -18,6 +18,7 @@ contract EscrowTest is Test {
         escrow = new Escrow(buyer, seller, arbitrator, fee, resolution);
 
         vm.deal(buyer, 5 ether);
+        vm.deal(seller, 5 ether);
     }
 
     function testDeposit() public {
@@ -36,7 +37,7 @@ contract EscrowTest is Test {
         vm.prank(seller);
         escrow.confirmDelivery();
 
-        assertEq(address(seller).balance, 5 ether);
+        assertEq(address(seller).balance, 10 ether);
         assertEq(uint256(escrow.currentState()), 2); // COMPLETE
     }
 
@@ -51,7 +52,7 @@ contract EscrowTest is Test {
         assertEq(uint256(escrow.currentState()), 3); // DISPUTE
     }
 
-    function testResolveDispute() public {
+    function testResolveDisputeSeller() public {
         vm.prank(buyer);
         escrow.deposit{value: 5 ether}();
 
@@ -61,11 +62,11 @@ contract EscrowTest is Test {
         vm.prank(arbitrator);
         escrow.resolveDispute(1); // Favor seller
 
-        assertEq(address(seller).balance, 5 ether - fee);
+        assertEq(address(seller).balance, 10 ether - fee);
         assertEq(uint256(escrow.currentState()), 2); // COMPLETE
     }
 
-    function testResolveDspute() public {
+    function testResolveDisputeBuyer() public {
         vm.prank(buyer);
         escrow.deposit{value: 5 ether}();
 
@@ -78,6 +79,69 @@ contract EscrowTest is Test {
         assertEq(address(buyer).balance, 5 ether - fee);
         assertEq(uint256(escrow.currentState()), 2); // COMPLETE
     }
+
+    function testOnlyBuyerCanDeposit() public {
+    vm.prank(seller);
+
+    vm.expectRevert(Escrow.NotBuyer.selector);
+    escrow.deposit{value: 5 ether}();
+
+}
+
+
+    function testOnlySellerCanConfirmDelivery() public {
+    vm.prank(buyer);
+    escrow.deposit{value: 5 ether}();
+
+    vm.prank(buyer);
+    vm.expectRevert(Escrow.NotSeller.selector);
+    escrow.confirmDelivery();
+    }
+
+    function testCannotDepositTwice() public {
+    vm.prank(buyer);
+    escrow.deposit{value: 5 ether}();
+
+    vm.prank(buyer);
+    vm.expectRevert();
+    escrow.deposit{value: 0}();
+   }
+
+    function testCannotConfirmDeliveryBeforeDeposit() public {
+    vm.prank(seller);
+    vm.expectRevert();
+    escrow.confirmDelivery();
+    }
+
+    
+    function testOnlyArbitratorCanResolveDispute() public {
+    vm.prank(buyer);
+    escrow.deposit{value: 5 ether}();
+
+    vm.prank(buyer);
+    escrow.raiseDispute();
+
+    vm.prank(buyer);
+    vm.expectRevert(Escrow.NotArbitrator.selector);
+    escrow.resolveDispute(1);
+}
+
+    function testInvalidStateTransitions() public {
+    vm.prank(buyer);
+    vm.expectRevert(Escrow.InvalidState.selector);
+
+    
+    escrow.raiseDispute();
+    }
+
+     function testResolveWithoutDispute() public {
+    vm.prank(buyer);
+    escrow.deposit{value: 5 ether}();
+
+    vm.prank(arbitrator);
+    vm.expectRevert();
+    escrow.resolveDispute(1);
+}
 
 
 

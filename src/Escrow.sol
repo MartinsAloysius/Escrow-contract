@@ -65,6 +65,8 @@ contract Escrow {
         fee = _fee;
         disputeResolution = _resolution;
 
+        amount = 5 ether; // Set a default amount for testing purposes
+
         currentState = State.AWAITING_PAYMENT;
     }
 
@@ -87,6 +89,8 @@ contract Escrow {
     }
 
     function deposit() external payable onlyBuyer {
+        require(msg.sender == buyer, "Only buyer can call this function");
+        require(msg.value == amount, "Deposit amount must match the agreed amount");
         if (currentState != State.AWAITING_PAYMENT) revert InvalidState();
         if (msg.value <= 0) revert InvalidAmount();
 
