@@ -130,6 +130,14 @@ function resolveDispute(int256 _resolution) external
 
 ---
 
+## Deployment
+
+| Network | Contract Address |
+|---------|-----------------|
+| Sepolia Testnet | `0x396a544c94377ec53689550f123ced62edf85da2` |
+
+---
+
 ## Development & Testing
 
 This project uses [Foundry](https://book.getfoundry.sh/).
